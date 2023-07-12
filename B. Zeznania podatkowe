@@ -1,0 +1,108 @@
+// Kacper Mycka - nr grupy 2
+import java.util.Scanner;
+
+// Program w mainie tworzy i uzupelnia tablice long z zeznaniami podatkowymi. Nastepnie odczytuje zakres z inputu i dla kazdego zakresu
+// sprawdza za pomoca funkcji SearchBinFirst indeks wystepujacej w tablicy najmniejszej i najwiekszej wartosci nalezacej do zakresu w tablicy
+
+class Source {
+    public static Scanner sc = new Scanner(System.in);
+    public static long arr[];
+
+    public static int SearchBinFirst(long key) { // zwroci pierwsze wystapienie szukanego elementu lub pierwszy wiekszy element
+        int low = 0; // ograniczenie dolne
+        int high = arr.length - 1; // ograniczenie gorne
+        int mid = -1;
+    
+        while (low <= high) {
+            mid = (low + high) / 2; // bedziemy sprawdzac wartosc dla indeksu tablicy w polowie aktualnego zakresu
+            long midValue = arr[mid];
+    
+            if (midValue < key) { // jezeli szukana wartosc jest wieksza, w kolejnej iteracji bedziemy sprawdzac 'wieksza' polowe
+                low = mid + 1;
+            } else if (midValue > key) { // jezeli szukana wartosc jest mniejsza w kolejnej iteracji bedziemy sprawdzac 'mniejsza' polowe
+                high = mid - 1;
+            } else { // jezeli znaleziono szukana wartosc to
+                if (mid != 0 && midValue == arr[mid - 1]) { // jezeli wczesniej wystepuje ten sam element to przeprowadzamy kolejne iteracje
+                    high = mid - 1;
+                }
+                else return mid; // w przeciwnym razie znaleziono pierwsze wystapienie 
+            }
+        }
+
+        if (key > arr[mid] && mid != arr.length - 1) return mid + 1;
+        else return mid; // element nieznaleziony, dla tablicy pustej zwroci -1, w przeciwnym razie zaokraglona lokalizacje wedlug zalozen
+    }
+
+    public static void diffNum(long[] array) { // print ilosc roznych liczb w secie, zlozonosc n
+        int diff; // zmienna do przechowania ilosci roznych liczb
+        if (array.length > 0) diff = 1; // jezeli tablica ma jakis element to ma conajmniej jeden unikalny element
+        else diff = 0;
+        for (int i = 0; i < array.length - 1; i++) { // wykona sie tylko dla tablic niepustych
+            if (array[i] != array[i+1]) diff++; // jezeli np. el2 jest rozny niz el1 to mamy juz 2 elementy unikalne
+        }
+        System.out.println(diff);
+    }
+    
+    public static void rangeValue(long[] array, long begin, long end) { // print wartosci z zakresu
+
+        int value = 0;
+        int start = SearchBinFirst(begin); // oblicza pierwsze wystapienie
+        int finish = SearchBinFirst(end + 1); // oblicza ostatnie wystapienie
+        if (finish != 0 && finish != -1 && arr[finish] > end) finish -= 1;
+
+        // begin <= end
+        if (start == -1 && finish == -1) { // tablica pusta
+            value = 0;
+        }
+        else if (array[start] < begin || array[finish] > end) { // liczba szukana poza zakresem wywola ta czesc
+            value = 0;
+        }
+        else value = finish - start + 1; // jezeli znaleziono to zwroci odpowiednia ilosc
+
+        if (begin > end) value = 0;
+        System.out.println(value);
+    }
+
+    public Source(int size) {
+        arr = new long[size]; // konstruktor utworzy tablice z zeznaniami
+    }
+
+    public static void main(String[] args) {
+        int setsnum = sc.nextInt(); // ilosc setow, pierwsza dana
+        for (int x = 0; x < setsnum; x++) { // wykonanie dla kazdego seta
+            int size = sc.nextInt();
+            Source src = new Source(size); // konstruktor stworzy tablice z zeznaniami podatkowymi
+            for (int i = 0; i < size; i++) {
+                arr[i] = sc.nextLong(); // uzupelniamy ja wartosciami
+            }
+
+            int rangenum = sc.nextInt(); // ilosc sprawdzanych zakresow
+            for (int a = 0; a < rangenum; a++) { // dla kazdego zakresu
+                long begin = sc.nextLong(); // ograniczenie dolne
+                long end = sc.nextLong(); // ograniczenie gorne
+                rangeValue(arr, begin, end); // print ilosci zeznan w zakresie
+            }
+
+            diffNum(arr); // na koniec ilosc roznych zlozonych zeznan
+        }
+    }
+}
+
+//input
+// 2
+// 10
+// -10 1 2 2 2 5 6 8 8 9
+// 2
+// 0 6
+// 8 2
+// 6
+// 1 2 3 4 4 6
+// 1
+// 5 6
+
+//output
+// 6
+// 0
+// 7
+// 1
+// 5
