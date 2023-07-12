@@ -1,0 +1,92 @@
+// Kacper Mycka
+
+import java.util.Scanner;
+
+// Zadanie polega na implementacji MergeSort dzialajacej na maksymalnej tablicy pomocniczej o wielkosci n/2 + 1
+// Podczas sortowania zliczana jest a nastepnie zwracana ilosc inwersji w tablicy
+
+public class Source {
+    Scanner sc = new Scanner(System.in);
+
+    public static int Inversion(int[] array, int left, int right) {
+        int inversions = 0;
+        if (left < right) { // dopoki wiecej niz jeden element podtablicy
+            int middle = (left + right) / 2; // znajdujemy element srodkowy
+            inversions += Inversion(array, left, middle); // rekurencja dla podzielonych poddtablic
+            inversions += Inversion(array, middle + 1, right);
+            inversions += Merge(array, left, middle, right); // scalenie posortowanych poddtablic
+        }
+        return inversions;
+    }
+
+    public static int Merge(int[] array, int left, int middle, int right) {
+        int inversions = 0;
+    
+        // kopiujemy pierwsza czesc tablicy do tablicy tymczasowej
+        int[] tempArray = new int[middle - left + 1]; // tabica bedzie miala zawsze n/2 + 1 elementow zgodnie z poleceniem
+        for (int i = 0; i < tempArray.length; i++) {
+            tempArray[i] = array[left + i];
+        }
+    
+        // Laczenie dwoch podtablic
+        int i = 0;
+        int j = middle + 1;
+        int k = left;
+        while (i < tempArray.length && j <= right) { // dopoki obydwie podtablice maja elementy
+            if (tempArray[i] <= array[j]) { // sortowanie w odpowiednim porzadku
+                array[k++] = tempArray[i++];
+            } else {
+                array[k++] = array[j++];
+                inversions += (middle - left + 1) - i; // zliczanie ilosci inwersji
+            }
+        }
+    
+        // pozostale elementy z lewej podtablicy dopisujemy
+        while (i < tempArray.length) {
+            array[k++] = tempArray[i++];
+        }
+    
+        // pozostale elementy z prawej podtablicy dopisujemy
+        while (j <= right) {
+            array[k++] = array[j++];
+        }
+    
+        return inversions;
+    }
+
+public static void main(String[] args) throws Exception {
+            Source source = new Source();
+            int sets = source.sc.nextInt(); // liczba setow
+            for (int i = 0; i < sets; i++) {
+                int array_size = source.sc.nextInt(); // liczba danych
+                int array[] = new int[array_size];
+                for (int j = 0; j < array_size; j++) { // uzupelnienie tablicy
+                    array[j] = source.sc.nextInt();
+                }
+                System.out.println(Inversion(array, 0, array.length - 1)); // rekurencyjne obliczanie inwersji
+            }
+    }
+}
+
+// input
+// 6
+// 8
+// 1 2 3 4 8 9 11 5
+// 6
+// 3 5 3 3 1 1
+// 10
+// 1 2 3 4 5 6 7 8 9 10
+// 10
+// 10 1 2 3 4 5 6 7 8 9
+// 10
+// 10 9 8 7 6 5 4 3 2 1
+// 10
+// 0 0 0 0 0 0 0 0 0 0 
+
+// output
+// 3
+// 10
+// 0
+// 9
+// 45
+// 0
