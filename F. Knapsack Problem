@@ -1,0 +1,256 @@
+// Kacper Mycka
+import java.util.Scanner;
+
+// Zadanie polega na implementacji funkcji rekurencyjnej oraz symulujacej jej funkcji iteracyjnej ktore maja zapelnic plecak
+// Funkcja rekurencyjna po dodaniu elementu ktory miesci sie w plecaku wywoluje sie od kolejnego elementu i sprawdza czy w ten sposob uzupelni plecak
+// Jezeli nie omija dodany element i probuje napelnic plecak od kolejnego elementu
+// Funkcja iteracyjna jest inspirowana funkcja z wykladu (zmodyfikowana).
+// Funkcja sprawdza po kolei czy elementy sa w stanie napelnic plecak, jezeli sie to nie uda to ostatni dodany element jest usuwany z plecaka, a na stos
+// wracaja tylko elementy wystepujace po elemencie wyjetym
+
+public class Source {
+    public static Scanner sc = new Scanner(System.in);
+
+    public static boolean iter_pakuj(int[] weights, int[] solution, int capacity) {
+
+        Stack S = new Stack(1000);
+
+        return step(weights, solution, capacity, 1, S);
+    }
+
+    static class Params { // parametry zapisywane na stosie
+        public int weight; // waga przedmiotu
+        public int index; // indeks przedmiotu
+        public int addr; // adres powrotu
+        public Params(int we, int in, int ra) { // konstruktor
+            weight = we;
+            index = in;
+            addr = ra;
+        }
+    }
+
+    public static boolean step(int[] weights, int[] solution, int capacity, int label, Stack S) {
+        int index = weights.length;
+        Params nPar;
+        while (true) {
+            switch(label) {
+                case 1:
+                    // dodanie 'straznika', bedzie informowal o dotarciu na koniec stosu
+                    nPar = new Params(0, index, 6);
+                    S.push(nPar);
+                    label = 2;
+                    break;
+                case 2:
+                    nPar = S.top();
+                    if(nPar.index == 0) { // dla pierwszego elementu przechodzimy do labela 5
+                        label = 5;
+                    }
+                    else // dla kazdego pozostalego elementu do labela 3
+                        label = 3;
+                break;
+                    case 3: // dodajemy kolejny element na stos i wracamy do labela 2 sprawdzic czy stos sie skonczyl
+                        index--;
+                        nPar = new Params(weights[index], index, 4);
+                        S.push(nPar);
+                        label = 2;
+                    break;
+                case 4:
+                    if (weights[index] <= capacity) { // jezeli mozna dodac element do plecaka to dodajemy
+                        capacity -= weights[index];
+                        solution[index] = 1;
+                    }
+                    index++;
+                    label = 5; // wracamy sprawdzic warunki w labelu 5
+                    break;
+                case 5: // sprawdzamy czy udalo sie wypelnic plecak
+                    if (capacity == 0) return true;
+                    nPar = S.top(); // jezeli nie to zdejmujemy element ze stosu i przechodzimy do labela 4
+                    label = nPar.addr; 
+                    if (label == 4) {
+                        S.pop();
+                    }
+                    break;
+            
+                case 6: // dotarcie na koniec stosu oznacza ze nie udalo sie do tej pory wypelnic plecaka
+                    index--;
+                    while (solution[index] == 0) { // usuwamy ostatni dodany element z plecaka i dodajemy na stos pozniejsze elementy
+                        nPar = new Params(weights[index], index, 4);
+                        S.push(nPar);
+                        if (index == 0) {
+                            return false;
+                        }
+                        index--;
+                    }
+                    solution[index] = 0;
+                    capacity += weights[index]; // przywracamy wczesniejsza pojemnosc
+                    index++;
+                    label = 5; // probujemy uzupelnic plecak od kolejnego elementu
+                    break;
+            }
+        }
+    }
+
+    static class Stack {
+        private int maxSize; // dĹugoĹÄ tablicy Stack
+        private Params[] Tab; // referencja do Tab o elem. Params
+        private int top; // wierzchoĹek stosu
+
+        public Stack(int n) { // konstruktor
+            maxSize = n; // okreĹlamy wielkoĹÄ tablicy
+            Tab = new Params[maxSize]; // tworzymy tablicÄ
+            top = -1; // na razie tablica jest pusta
+        }
+
+        public void push(Params p) { // umieszczenie elementu na wierzchoĹku
+       
+            Tab[++top] = p;
+        }
+    
+        public Params pop(){ // pobranie elementu z wierzchoĹka stosu
+            return Tab[top--];
+        }
+
+        public Params top(){ // odczyt elementu z wierzchoĹka stosu
+            // bez usuwania elementu
+            return Tab[top];
+        }
+    }
+    
+
+    public static boolean rec_pakuj(int[] weights, int[] solution, int capacity, int index) {
+        // Sprawdzamy, czy udaĹo siÄ umieĹciÄ przedmioty o wadze rĂłwnej pojemnoĹci plecaka
+        if (capacity == 0) {
+            return true;
+        }
+    
+        // Sprawdzamy, czy udaĹo siÄ juĹź umieĹciÄ wszystkie przedmioty w plecaku
+        if (index == weights.length) {
+            return false;
+        }
+    
+        // Sprawdzamy, czy moĹźna umieĹciÄ pierwszy przedmiot w plecaku
+        if (weights[index] <= capacity) {
+            // Ustawiamy wartoĹÄ elementu solution[index] na 1
+            solution[index] = 1;
+    
+            // WywoĹujemy rekurencyjnie funkcjÄ dla pozostaĹych przedmiotĂłw i pojemnoĹci plecaka zmniejszonej o wagÄ aktualnego przedmiotu
+            if (rec_pakuj(weights, solution, capacity - weights[index], index + 1)) {
+                // JeĹli udaĹo siÄ umieĹciÄ pozostaĹe przedmioty w plecaku, ustawiamy wartoĹÄ elementu solution[index] na 0 i zwracamy true
+                return true;
+            }
+            // JeĹli nie udaĹo siÄ umieĹciÄ pozostaĹych przedmiotĂłw w plecaku, ustawiamy wartoĹÄ elementu solution[index] na 0
+            solution[index] = 0;
+        }
+    
+        // Jezeli nie udalo sie zmiescic aktualnego przedmiotu
+        // WywoĹujemy rekurencyjnie funkcjÄ dla pozostaĹych przedmiotĂłw i niezmienionej pojemnoĹci plecaka
+        if (rec_pakuj(weights, solution, capacity, index + 1)) {
+            return true;
+        }
+    
+        // JeĹli nie udaĹo siÄ umieĹciÄ Ĺźadnego przedmiotu, zwracamy false
+        return false;
+    }
+
+    public static void main(String[] args) throws Exception {
+
+        int iter = sc.nextInt();
+        for (int i = 0; i < iter; i++) {
+            int capacity = sc.nextInt();
+            int size = sc.nextInt();
+            int[] elements = new int[size];
+            for (int j = 0; j < size; j++) {
+                elements[j] = sc.nextInt();
+            }
+
+            int[] recSolution = new int[size];
+            int[] iterSolution = new int[size];
+            for (int j = 0; j < size; j++) {
+                iterSolution[j] = 0;
+                recSolution[j] = 0;
+            }
+
+            if (rec_pakuj(elements, recSolution, capacity, 0) && iter_pakuj(elements, iterSolution, capacity)) {
+                System.out.printf("REC:  %d = ", capacity);
+                for (int k = 0; k < size; k++) {
+                    if (recSolution[k] == 1) {
+                        System.out.print(elements[k]);
+                        if (k + 1 < size) System.out.print(" ");
+                    }
+                }
+
+                System.out.printf("\nITER: %d = ", capacity);
+                for (int k = 0; k < size; k++) {
+                    if (iterSolution[k] == 1) {
+                        System.out.print(elements[k]);
+                        if (k + 1 < size) System.out.print(" ");
+                    }
+                }
+            }
+            else {
+                System.out.print("BRAK");
+            }
+            System.out.println();
+        }
+    }
+}
+
+// input
+// 10
+// 2000
+// 4
+// 1 2 3 1999
+// 6
+// 3
+// 1 2 3
+// 20
+// 5
+// 11 8 7 6 5
+// 21
+// 3
+// 5 6 7
+// 20000
+// 10
+// 1 2 3 4 5 6 7 8 9 10
+// 2
+// 4
+// 1000 2000 3000 4000
+// 5
+// 4
+// 0 4 3 3000
+// 8
+// 4
+// 2 3 5 20
+// 6
+// 5
+// 10 2 3 4 3
+
+// output
+// 10
+// 2000
+// 4
+// 1 2 3 1999
+// 6
+// 3
+// 1 2 3
+// 20
+// 5
+// 11 8 7 6 5
+// 21
+// 3
+// 5 6 7
+// 20000
+// 10
+// 1 2 3 4 5 6 7 8 9 10
+// 2
+// 4
+// 1000 2000 3000 4000
+// 5
+// 4
+// 0 4 3 3000
+// 8
+// 4
+// 2 3 5 20
+// 6
+// 5
+// 10 2 3 4 3
