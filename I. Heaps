@@ -1,0 +1,212 @@
+// Kacper Mycka
+import java.util.Scanner;
+
+// Program jest implementacja kolejki priorytetowej za pomoca kopca.
+// Zbudowany na bazie klas HeapElement oraz Heap, gdzie Heap implementuje kolejke priorytetowa na bazie kopca, a HeapElement przechowuje wartosc kopca oraz ilosc jego wystapien
+// Metody kopca sa implementacja zgodna z wykladem
+
+public class Source {
+    public static Scanner sc = new Scanner(System.in);
+
+    // HeapElement przechowuje wartosc kopca oraz ilosc jego wystapien
+    public static class HeapElement {
+        private int value;
+        private int counter;
+
+        // konstruktora uzywamy tylko tworzac nowy element, wiec licznik ustawiamy na 0
+        public HeapElement(int value) {
+            this.value = value;
+            this.counter = 1;
+        }
+
+        // zwracamy wartosc
+        public int getValue() {
+            return value;
+        }
+
+        // zwracamy ilosc wystapien
+        public int getCounter() {
+            return counter;
+        }
+    }
+
+    public static class Heap {
+        private HeapElement[] heapArray; // glowna tablica przechujaca elementy
+        private int maxSize; // maksymalna ilosc roznych elementow
+        private int currentSize; // aktualna ilosc roznych elementow
+        private int maxElements; // maksymalna sumaryczna ilosc elementow
+        private int currentElements; // laczna aktualna ilosc elementow
+
+        public Heap(int size, int elements) { // konstruktor
+            maxSize = size; // maksymalne rozmiary dajemy w kosturktorze
+            maxElements = elements;
+            currentSize = 0; // kopiec domyslnie pusty
+            currentElements = 0;
+            heapArray = new HeapElement[maxSize]; // wielkosc zalezna od unikalnych elementow, duplikaty liczmy w counter HeapElementu
+        }
+
+        int size() { // zwrot rozmiaru
+            return currentSize;
+        }
+        
+        int elements() { // zwrot ilosci elementow
+            return currentElements;
+        }
+
+        void upheap(int k) { // implementacja upheap zgodna z wykladem
+            int i = (k - 1) / 2;
+            HeapElement tmp = heapArray[k];
+            while (k > 0 && compare(heapArray[i], tmp) < 0) { // compare rownoznaczne z porownaniem heapArray[i] < tmp
+                heapArray[k] = heapArray[i];
+                k = i;
+                i = (i - 1) / 2;
+            }
+            heapArray[k] = tmp;
+        }
+
+        void downheap(int k, int n) { // implementacja upheap zgodna z wykladem
+            int j;
+            HeapElement tmp = heapArray[k];
+            while (k < n / 2) {
+                j = 2 * k + 1;
+                if (j < n - 1 && compare(heapArray[j], heapArray[j + 1]) < 0) // compare rownoznaczne z porownaniem heapArray[j] < heapArray[j + 1]
+                    j++;
+                if (compare(tmp, heapArray[j]) >= 0) // compare rownoznaczne z porownaniem tmp >= heapArray[j]
+                    break;
+                heapArray[k] = heapArray[j];
+                k = j;
+            }
+            heapArray[k] = tmp;
+        }
+
+        // metoda sprawdzajaca czy element wystepuje w tablicy i zwracajaca indeks
+        int inArray(int x) { // w argumencie szukana wartosc
+            for (int i = 0; i < currentSize; i++) { // przejscie po calym kopcu
+                if (heapArray[i].getValue() == x) {
+                    return i; // jezeli wartosc znaleziona to zwraca indeks
+                }
+            }
+            return -1; // jezeli niewystepuje to zwraca 1
+        }
+
+        boolean Insert(HeapElement element) { 
+            if (currentElements == maxElements) return false; // jezeli nie da sie zmiescic wiecej elementow
+        
+            int i = inArray(element.value);
+            if (i > -1) { // element wystepuje w tablicy
+                heapArray[i].counter++; // dodajemy duplikat
+                upheap(i); // ustawiamy powiekszony element na miejsce
+            }
+            else { // element nowy
+                if (currentSize == maxSize) return false; // nie mozna dodac nowego elementu
+
+                heapArray[currentSize] = element;
+                upheap(currentSize); // ustawiamy nowy element na miejsce
+                currentSize++; // kolejny unikalny element
+            }
+
+            currentElements++; // zwiekszamy licznik elementow
+            return true;
+        }
+
+        HeapElement Max() { // zwrot elementu z najwyzszym priorytetem
+            return heapArray[0];
+        }
+
+        HeapElement DeleteMax() {
+            HeapElement root = heapArray[0]; // element o najwyzszym priorytecie
+            if (root.counter == 1) { // calkiem znika, jedyne wystapienie elementu
+                currentSize--; // element znika, wiec zmniejszamy licznik unikalnych elementow
+                root.counter--; // zerujemy licznik
+                heapArray[0] = heapArray[currentSize]; // przesuwamy na poczatek ostatni w kolejce element, aby nie zniknal
+            }
+            else { // element wystepuje wielokrotnie
+                root.counter--; // zmniejszamy licznik
+            }
+            currentElements--; // zawsze zmniejszamy ilsosc elmentow
+            downheap(0, currentSize); // ustawiamy odpowiednio kopiec
+            return root;
+        }
+
+        void HeapSort() { // sortowanie zgodne z wykladem
+            for (int k = (currentSize - 1) / 2; k >= 0; k--) downheap(k, currentSize);
+
+            for (int i = currentSize; i > 0; i--) {
+                HeapElement tmp = heapArray[0];
+                heapArray[0] = heapArray[i - 1];
+                heapArray[i - 1] = tmp;
+                downheap(0, i - 1);
+            }
+        }
+
+        // porownanie priorytetu dwoch elementow, 1 jezeli pierwszy wiekszy, 0 dla rownosci, -1 jezeli drugi wiekszy
+        private int compare(HeapElement element1, HeapElement element2) {
+            if (element1.getCounter() > element2.getCounter()) // w pierwszej kolejnosci bierzemy pod uwage ilosc wystapien
+                return 1;
+            else if (element1.getCounter() < element2.getCounter())
+                return -1;
+            else { // a w drugiej kolejnosci porzadek wiekszosciowy int
+                if (element1.getValue() > element2.getValue())
+                    return 1;
+                else if (element1.getValue() < element2.getValue())
+                    return -1;
+                else
+                    return 0; // wlasciwie nie wystepuje
+            }
+        }
+    }
+
+
+    
+    public static void main(String[] args) {
+        int sets = sc.nextInt(); // ilosc setow
+        for (int i = 0; i < sets; i++) {
+            int N = sc.nextInt(); // max roznych elementow
+            int P = sc.nextInt(); // ogolny max
+            char operation = 'x'; // znak operacji, startowo niewystepujacy
+            Heap heap = new Heap(N, P); // nowy kopiec
+            while (operation != 's') { // s zawsze na koncu, wiec zakonczy program
+                operation = sc.next().charAt(0); // pobieramy znak operacji
+                switch (operation) {
+                    case 'i':
+                        int k = sc.nextInt(); // ile elementow dodajemy
+                        for (int j = 0; j < k; j++) { // dla kazdego elementu
+                            HeapElement newOne = new HeapElement(sc.nextInt()); // tworzymy nowy element o podanej wartosci
+                            heap.Insert(newOne); // i probujemy dodac do kopca
+                        }
+                    break;
+                    case 'g':
+                        int number = sc.nextInt(); // sprawdzamy ile elementow usuwamy
+                        int deleted = 0; // sprawdzamy jaki element usuwamy
+                        int value = 0; // sprawdzamy ile usuwamy
+                        if (heap.currentSize > 0) { // jezeli tablica niepusta
+                            value = heap.heapArray[0].value; // bierzemy pierwszy element
+                            // w zaleznosci od counter i number usuwamy wszystkie wystapienia elementu lub podana ich number ilosc
+                            if (heap.heapArray[0].counter > number) {
+                                deleted = number;
+                                heap.heapArray[0].counter -= number;
+                                heap.currentElements -= number;
+                            }
+                            else {
+                                deleted = heap.heapArray[0].counter;
+                                heap.currentElements -= deleted;
+                                heap.currentSize--;
+                                heap.heapArray[0].counter = 0;
+                                heap.heapArray[0] = heap.heapArray[heap.currentSize];
+                            }
+                            heap.downheap(0, heap.currentSize); // ustawiamy ponownie kopiec w odpowiedni sposob
+                        }
+                        System.out.printf("%d %d\n", value, deleted); // printujemy wartosci
+                    break;
+                    case 's':
+                        heap.HeapSort(); // sortujemy
+                        for (int j = 0; j < heap.currentSize; j++) { // i printujemy wszystkie elementy
+                            System.out.printf("%d %d ", heap.heapArray[j].value, heap.heapArray[j].counter);
+                        }
+                        System.out.println();
+                    break;
+                }
+            }
+        }
+    }
+}
