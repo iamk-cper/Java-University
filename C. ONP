@@ -1,0 +1,499 @@
+// Kacper Mycka - nr grupy 2
+import java.util.Scanner;
+
+
+// implementacja stosow zawiera tylko metody ktore byly mi potrzebne w zadaniu
+class stackArray{
+    private int maxSize; // rozmiar tablicy zawierajacej stos
+    private char[] Elem; // tablica zawierajaca stos
+    private int t; // indeks wierzcholka stosu
+
+    public stackArray(int size) { // konstruktor - Create()
+        maxSize = size; // ustawiamy rozmiar tablicy
+        Elem = new char[maxSize]; // tworzymy tablice dla elementow
+        t = size; // na razie brak elementow (stos rosnie w gore)
+    }
+
+    public void push(char x) { // wstawia element na szczyt stosu
+        Elem[-- t] = x; // zmniejszamy top, odkladamy element
+    }
+
+    public char pop() { // usuwa element ze szczytu stosu
+        return Elem[t ++]; // pobieramy element i zwiekszamy t
+    }
+
+    public boolean isEmpty() { // zwraca true, jezeli stos pusty
+        return (t == maxSize);
+    }
+
+} // koniec klasy stack
+
+class stackString{
+    private int maxSize; // rozmiar tablicy zawierajacej stos
+    private String[] Elem; // tablica zawierajaca stos
+    private int t; // indeks wierzcholka stosu
+
+    public stackString(int size) { // konstruktor - Create()
+        maxSize = size; // ustawiamy rozmiar tablicy
+        Elem = new String[maxSize]; // tworzymy tablice dla elementow
+        t = size; // na razie brak elementow (stos rosnie w gore)
+    }
+
+    public void push(String x) { // wstawia element na szczyt stosu
+        Elem[-- t] = x; // zmniejszamy top, odkladamy element
+    }
+
+    public String pop() { // usuwa element ze szczytu stosu
+        return Elem[t ++]; // pobieramy element i zwiekszamy t
+    }
+
+    public boolean isEmpty() { // zwraca true, jezeli stos pusty
+        return (t == maxSize);
+    }
+
+} // koniec klasy stack
+
+class Source {
+    public static Scanner sc = new Scanner(System.in); // zmienna do skanowania
+    public static char[] line = new char[256]; // tablica na ktorej bedziemy operowac
+
+    public static boolean isOperator(char a) { // zewnetrzna metoda do sprawdzania czy znak jest operatorem
+        switch (a) {
+            case '=':
+            case '<':
+            case '|':
+            case '&':
+            case '>':
+            case '+':
+            case '-':
+            case '*':
+            case '/':
+            case '%':
+            case '^':
+            case '?':
+            case '~':
+            case '(':
+            case ')':
+            case '!':
+                return true; // zwraca prawde dla dowolnego operatora
+        }
+        return false; // w przeciwnym wypadku falsz
+    }
+
+    public static boolean isOperand(char a) { // zewnetrzna metoda do sprawdzania czy znak jest operandem
+        if (a >= 'a' && a <= 'z') {
+            return true; // jezeli jest operandem zwraca prawde
+        }
+        else return false; // w przeciwnym wypadku falsz
+    }
+
+    public static boolean rightside(char a) { // metoda sprawdza czy operator jest prawostronny
+        if (a == '!' || a == '~' || a == '=' || a == '^') return true;
+        else return false;
+    }
+
+    public static int priority(char a) { // metoda okresla priorytet z kolejnoscia zgodna z tabela okreslona w zadaniu
+        if (a == '=') return 0;
+        else if (a == '|') return 1;
+        else if (a == '&') return 2;
+        else if (a == '?') return 3;
+        else if (a == '>' || a == '<') return 4;
+        else if (a == '+' || a == '-') return 5;
+        else if (a == '*' || a == '/' || a == '%') return 6;
+        else if (a == '^') return 7;
+        else if (a == '!' || a == '~') return 8;
+        else if (a == '(' || a == ')') return 9;
+        return -1; // wartosc nie bedzie wykorzystywana
+    }
+
+    public static boolean isDoubleOperator(char a) { // sprawdza czy operator wymaga dwoch zmiennych do poprawnosci
+        switch (a) {
+            case '=':
+            case '|':
+            case '&':
+            case '?':
+            case '<':
+            case '>':
+            case '+':
+            case '-':
+            case '*':
+            case '/':
+            case '%':
+            case '^':
+            return true;
+        }
+        return false; // falsz dla !, ~, (, )
+    }
+
+    public static char[] validationinf(char[] line) { // metoda usuwa zbedne znaki z danego wyrazenia inf na inpucie
+        char[] output = new char[line.length - 4]; // tablica ma wielkosc conajwyzej dlugosci wyrazenia, mozna skrocic ja o zawarte w linii INF:
+        boolean valid = false; // jezeli valid = true to bedziemy zapisywac dana do tablicy outputowej
+        int j = 0; // indeks w outpucie
+        for (int i = 5; i < line.length; i++) { // zaczynamy sprawdzanie od indeksu pierwszego znaku w wyrazeniu, omijamy INF: 
+            if (line[i] >= 'a' && line[i] <= 'z') valid = true; // operandy sa poprawne
+            else {
+                switch (line[i]) { // oraz wszystkie operatory
+                case '=':
+                case '|':
+                case '&':
+                case '?':
+                case '<':
+                case '>':
+                case '+':
+                case '-':
+                case '*':
+                case '/':
+                case '%':
+                case '^':
+                case '~':
+                case '!':
+                case '(':
+                case ')':
+                    valid = true;
+                    break;
+                }
+            }
+
+            if (valid == true) { 
+                valid = false; // wracamy do domyslnej wartosci false
+                output[j] = line[i]; // poprawny operator zapisujemy do outputu
+                j++; // ustawiamy indeks na kolejne miejsce w outpucie
+            }
+
+        }
+        return output; // zwracamy tablice wynikowa
+    }
+
+    public static char[] validationonp(char[] line) { // metoda usuwa zbedne znaki z danego wyrazenia onp na inpucie
+        char[] output = new char[line.length - 4]; // tablica ma wielkosc conajwyzej dlugosci wyrazenia, mozna skrocic ja o zawarte w linii ONP:
+        boolean valid = false; // jezeli valid = true to bedziemy zapisywac dana do tablicy outputowej
+        int j = 0; // indeks w outpucie
+        for (int i = 5; i < line.length; i++) { // zaczynamy sprawdzanie od indeksu pierwszego znaku w wyrazeniu, omijamy ONP: 
+            if (line[i] >= 'a' && line[i] <= 'z') valid = true; // operandy sa poprawne
+            else {
+                switch (line[i]) { // oraz operatory za wylaczeniem nawiasow, ktore nie wystepuja w notacji ONP
+                    case '=':
+                    case '|':
+                    case '&':
+                    case '?':
+                    case '<':
+                    case '>':
+                    case '+':
+                    case '-':
+                    case '*':
+                    case '/':
+                    case '%':
+                    case '^':
+                    case '~':
+                    case '!':
+                    valid = true;
+                    break;
+                }
+            }
+
+            if (valid == true) {
+                valid = false; // wracamy do domyslnej wartosci false
+                output[j] = line[i]; // poprawny operator zapisujemy do outputu
+                j++; // ustawiamy indeks na kolejne miejsce w outpucie
+            }
+
+        }
+        return output; // zwracamy tablice wynikowa
+    }
+
+    public static boolean infTest(char[] line) { // testuje wyrazenie bez dodatkowych znakow, zwraca prawde jezeli jest ono konwertowalne inf>onp
+        short type = 0; // type okresla stany zawarte w maszynie touringa pokazanej w zadaniu
+        short open = 0; // sprawdzamy wartosc otwartych i zamknietych nawiasow
+        for (int i = 0; line[i] != '\0' && i < line.length; i++) { // zrobilem podwojne sprawdzenie konca petli, poniewaz tablica char w javie nie posiada '\0' na koncu
+            if (type == 0) {
+                if (line[i] == '!' || line[i] == '~') {
+                    type = 2;
+                }
+                else if (line[i] == '(') {
+                    open += 1;
+                }
+                else if (isOperand(line[i])) {
+                    type = 1;
+                }
+                else {
+                    return false; // 'error'
+                }
+            }
+            else if (type == 1) {
+                if (isDoubleOperator(line[i])) {
+                    type = 0;
+                }
+                else if (line[i] == ')') {
+                    if (open > 0) { // jezeli istnieja jakies otwarte nawiasy to mozemy je zamknac
+                        open -= 1;
+                    }
+                    else return false; // 'error', jezeli nie istnieja otwarte nawiasy to jest to blad
+                }
+                else return false; // 'error'
+            }
+            else if (type == 2) {
+                if (line[i] == '(') {
+                    open += 1;
+                    type = 0;
+                }
+                else if (line[i] == '~' || line[i] == '!') {
+                    type = 2; // nic sie nie zmienia
+                }
+                else if (isOperand(line[i])) {
+                    type = 1;
+                }
+                else return false; // 'error'
+            }
+        }
+
+        if (type == 1 && open == 0) { // dane sa poprawne tylko jesli maszyna konczy dzialanie w stanie pierwszym oraz zamknieto wszystkie nawiasy
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    public static boolean onpTest(char[] wejscie) { // testuje wyrazenie bez dodatkowych znakow, zwraca prawde jezeli jest ono konwertowalne onp>inf
+        short operands = 0; // bedziemy sprawdzac czy wystapilo wystarczajaco operandow dla danego operatora
+        short option = 0; // bedziemy sprawdzac czy operandow dwuwyrazowych jest o 1 wiecej niz operatorow w wyrazeniu
+        for (int i = 0; wejscie[i] != '\0' && i < wejscie.length; i++) { // zrobilem podwojne sprawdzenie konca petli, poniewaz tablica char w javie nie posiada '\0' na koncu
+            if (wejscie[i] >= 'a' && wejscie[i] <= 'z') {
+                operands++; // natrafiono na operand wiec zwiekszamy ich aktualna ilosc w wyrazeniu
+                option++; // zwiekszamy tez ilosc aktualnych operatorow bez dwuwyrazowego operanda
+            }
+            else if (operands >= 2 && wejscie[i] != '~' && wejscie[i] != '!') { // jezeli mamy ponad dwa operandy to jest mozliwe wykorzystanie operatora dwuwyrazowego
+                option--; // wtedy zgodnie z zalozeniem zmniejszamy option
+            }
+            else if (operands < 2 && !(operands == 1 && wejscie[i] == '~') && !(operands == 1 && wejscie[i] == '!')) { // jezeli nie mozemy wykorzystac zadnego operatora a na niego trafimy to wyrazenie jest bledne
+                return false; // jezeli mamy ~ lub ! po pierwszym operandzie to wyrazenie jest poprawne, ale nie zmieniamy option dotyczacego operandow dwuczlonowych
+            }
+        }
+        if (option == 1) return true; // jezeli ilosc operandow i operatorow w wyrazeniu jest zgodna to wyrazenie jest obliczalne
+        else return false;
+    }
+
+    public static String toONP(char[] wejscie) { // konwersja obliczalnego wyrazenia INF na ONP
+        char[] wyjscie = new char[wejscie.length * 2]; // tablica outputowa jest znacznie wieksza, poniewaz output zawiera spacje, ktorych nie ma na wejsciu
+        stackArray stos = new stackArray(wejscie.length); // bedziemy korzystac ze stosu zgodnie z przedstawiona na wykladzie metoda konwersji INF na ONP
+
+        int j = 0;
+        char operand;
+        for (int i = 0; wejscie[i] != '\0' && i < wejscie.length; i++) { // zrobilem podwojne sprawdzenie konca petli, poniewaz tablica char w javie nie posiada '\0' na koncu
+            if (isOperand(wejscie[i])) { // jezeli natrafimy na operand to natychmiastowo dodajemy go do outputu
+                wyjscie[j] = wejscie[i];
+                j++;
+                wyjscie[j] = ' ';
+                j++;
+            }
+            else if (wejscie[i] == '(') { // jezeli natrafimy na nawias otwierajacy to zgodnie z zasada konwersji umieszczamy go na stosie
+                stos.push(wejscie[i]);
+            }
+            else if (wejscie[i] == ')') {
+                operand = stos.pop(); // jezeli zamykamy nawias to rozpoczynamy zabieranie operandow ze stosu do natrafienia otwierajacego nawiasu
+                while (operand != '(') { // gdy trafimy na nawias otwierajacy to nie bedziemy zapisywac go juz na wyjsciu, jak rowniez zamykajacego
+                    wyjscie[j] = operand; // dodajemy na wyjscie operandy ze stosu zgodnie z zalozeniem
+                    j++;
+                    wyjscie[j] = ' ';
+                    j++;
+                    operand = stos.pop(); // sprawdzamy kolejny operand
+                }
+            }
+
+            else if (isOperator(wejscie[i])) { // jezeli natrafimy na inny operator
+                int prty = priority(wejscie[i]); // sprawdzamy jego priorytet
+                if (!stos.isEmpty()) { // jezeli stos nie jest pusty to badamy sposob zapisu na wyjsciu, inaczej jedynie zapiszemy operator na koniec wyrazenia
+                    char element = stos.pop(); // zgarniamy kolejny operator ze stosu
+                    int stosprty = priority(element); // i sprawdzamy jego priorytet
+                    if (!rightside(wejscie[i]) && prty <= stosprty && element != '(') { // operatory lewostronne z wylaczeniem nawiasow, jezeli priorytet kolejnego operatora jest niemniejszy
+                        while (prty <= stosprty && element != '(') { // kazdy operator o niemniejszym priorytecie dodajemy na wyjscie
+                            wyjscie[j] = element;
+                            j++;
+                            wyjscie[j] = ' ';
+                            j++;
+                            if (stos.isEmpty()) break; // jezeli stos pusty to konczymy dzialanie
+                            else { // jezeli stos ma element to bedziemy sprawdzac kolejny element na stosie
+                                element = stos.pop();
+                                stosprty = priority(element);
+                                if (prty > stosprty || element == '(') { // jezeli kolejny element stosu zakonczylby petle to chcemy zachowac go na stosie
+                                    stos.push(element);
+                                }
+                            }
+                        }
+                    }
+                    else if (rightside(wejscie[i]) && prty < stosprty && element != '(') { // operatory prawostronne, jezeli kolejny operator ma priorytet mniejszy
+                        while (prty < stosprty && element != '(') { // dopoki pojawiaja sie operatory o wiekszym priorytecie to dodajemy je do wyjscia
+                            wyjscie[j] = element;
+                            j++;
+                            wyjscie[j] = ' ';
+                            j++;
+                            if (stos.isEmpty()) break; // jezeli stos pusty to konczymy dzialanie
+                            else {
+                                element = stos.pop();
+                                stosprty = priority(element);
+                                if (prty >= stosprty || element == '(') { // jezeli kolejny element stosu zakonczylby petle to chcemy zachowac go na stosie
+                                    stos.push(element);
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        stos.push(element); // jezeli kolejny operator nie nadaje sie do umieszczenia na wyjsciu to przywracamy go na stos
+                    }
+                }
+
+                stos.push(wejscie[i]); // na koniec dodajemy aktualny operator do wyjscia
+            }
+        }
+        while (!stos.isEmpty()) { // na koncu gdy skoncza sie operandy dodajemy wszystkie pozostale operatory ze stosu do wyrazenia
+            wyjscie[j] = stos.pop();
+            j++;
+            wyjscie[j] = ' ';
+            j++;
+        }
+
+        String output = new String(wyjscie).trim() + " "; // usuwam zbedne spacje z wyjscia gdyz baca to sprawdza
+        return output; // zwracam wyjscie w formie stringa
+    }
+    
+    public static String toINF(char[] wejscie) { 
+        stackString stos = new stackString(wejscie.length); // stos stringow bedzie zawieral kolejne elementy naszego wyjscia, metoda zgodna z przedstawiona na wykladzie
+        for (int i = 0; wejscie[i] != '\0' && i < wejscie.length; i++) { // jak wczesniej, podwojna weryfikacja
+            String element = String.valueOf(wejscie[i]); // kolejny znak uzyjemy na stosie wiec musimy go przekonwertowac na string
+            if (isOperand(wejscie[i])) { // jest operandem
+                stos.push(element); // dodajemy na stos
+            }
+            else { // element jest operatorem
+                if (wejscie[i] == '~' || wejscie[i] == '!') { // jezeli jest jednoargumentowy
+                    String current = stos.pop(); // biezemy element ze stosu
+                    current = element + " " + current; // i zapisujemy ten element wraz operatorem
+                    stos.push(current); // i przywracamy na stos
+                }
+                else {
+                    String second = stos.pop(); // pobieramy dwa argumenty dla kolejnego operatora
+                    String first = stos.pop();
+                    int next = 0; // bebdziemy badac czy aktualnie tworzone wyrazenie znajdzie sie po lewej czy prawej stronie kolejnego operatora
+                    int prior = -1; // losowa wartosc dla pozniej sprawdzanego priorytetu
+                    boolean check = wejscie[i+1] != '~' && wejscie[i+1] != '!'; // sprawdzamy czy bedziemy negowac aktualne wyrazenie
+                    // jezeli pozniej bedziemy wyrazenie negowac
+                    if (!check) { // jezeli bedziemy negowac wyrazenie dwuelementowe to nalezy je przygotowac wczesniej w nawiasach
+                        first = "( " + first + " " + element + " " + second + " )";
+                    }
+                    else { // jezeli bedziemy je pozniej wykorzystywac jako jeden z dwoch argumentow to szukamy z jakim operatorem je wykorzystamy
+                        for (int j = i + 1; wejscie[j] != '\0' && j < wejscie.length; j++) { // petla trwa do znalezienia szukanego operatora
+                            if (isOperand(wejscie[j])) next++; // jezeli wystepuje operand to nie jest szukany operator, bo uzyje on wczesniej wlasnego operatora
+                            else {
+                                check = wejscie[j] != '~' && wejscie[j] != '!'; // operatory jednoargumentowe nie wplywaja na poszukiwania
+                                if (check) next--; // jezeli jest dwuargumentowy to zmniejszamy next
+                                if ((next == 0 || next == -1) && check) { // jezeli trafilismy na szukany operator
+                                    prior = priority(wejscie[j]); // to sprawdzamy jego priorytet
+                                    break; // i przerywamy petle
+                                }
+                            }
+                        }
+    
+                        // jezeli next == -1 to nowy fragment jest first strona w kolejnym badanym operatorze z prior
+                        // jezeli next == 0 to nowy fragment jest second w kolejnym badanym operatorze z prior
+                        if (prior > priority(wejscie[i])) { // dla wiekszego priorytetu kolejnej operacji, nalezy aktualna operacje potraktowac nawiasami
+                            first = "( " + first + " " + element + " " + second + " )";
+                        }
+                        else if (prior < priority(wejscie[i])) { // dla mniejszego priorytetu nawiasy nalezy pominac
+                            first = first + " " + element + " " + second;
+                        }
+                        else { // dla rownego priorytetu
+                            if (wejscie[i] == '^' || wejscie[i] == '=') { // dla operatorow prawostronnych
+                                if (next == -1) { // lewe miejsce nie zawiera nawiasow
+                                    first = first + " " + element + " " + second;
+                                }
+                                else { // a prawe tak
+                                    first = "( " + first + " " + element + " " + second + " )";
+                                }
+                            }
+                            else { // dla operatorow lewostronnych
+                                if (next == -1) { // odwrotnie do prawostronnych
+                                    first = "( " + first + " " + element + " " + second + " )";
+                                }
+                                else { // odwrotnie do prawostronnych
+                                    first = first + " " + element + " " + second;
+                                }
+                            }
+                        }
+                    }
+                    stos.push(first); // a na stos zwracamy utworzone wyrazenie z dwoch operandow i operatora
+                }
+            }
+        }
+        return stos.pop().trim() + " "; // na koncu cale wyrazenie jest skompletowane na stosie, usuwamy spacje i zwracamy
+    }
+
+    public static void main(String[] args) {
+        int linesnum = sc.nextInt(); // ilosc linii, pierwsza dana
+        line = (sc.nextLine()).toCharArray();
+        for (int x = 0; x < linesnum; x++) { // wykonanie dla kazdej linii
+            line = (sc.nextLine()).toCharArray(); // pobieramy linie tekstu
+            if (line[0] == 'O') { // jezeli jest onp i jest poprawne
+                line = validationonp(line); // usuniecie zbednych znakow
+                if (onpTest(line)) { // jezeli wyrazenie jest obliczalne to liczymy
+                    System.out.println("INF: " + toINF(line));
+                }
+                else { // jezeli wyrazenie jest nieobliczalne to zwracamy blad
+                    System.out.println("INF: error");
+                }
+            }
+            else if (line[0] == 'I') { // jezeli jest inf i jest poprawne
+                line = validationinf(line); // usuniecie zbednych znakow
+                if (infTest(line)) { // jezeli wyrazenie jest obliczalne to liczymy
+                    System.out.println("ONP: " + toONP(line));
+                }
+                else { // jezeli wyrazenie jest nieobliczalne to zwracamy blad
+                    System.out.println("ONP: error");
+                }
+            }
+        }
+    }
+}
+
+// input.txt
+// 20
+// ONP: xa+!
+// ONP: xa!+
+// ONP: ( a,b,.).c;-,*
+// ONP: -abc-+de^/
+// ONP: a
+// ONP: ab*cd**
+// ONP: ab+a~a-+
+// ONP: ab+cd++
+// ONP: ab/c*
+// ONP: abc++def++g+++
+// ONP: abc-+de^/
+// INF: a+b+(~a-a)
+// INF: x=~~a+b*c
+// INF: t=~a<x<~b
+// INF: ~a-~~b<c+d&!p|!!q
+// INF: a^b*c-d<xp|q+x
+// INF: x=~a*b/c-d+e%~f
+// INF: a+b+(~a-a)
+// INF: x=~~a+b*c
+// INF: t = ~ a < x < ~b
+
+// output.txt
+// INF: ! ( x + a ) 
+// INF: x + ! a 
+// INF: a * ( b - c ) 
+// INF: error
+// INF: a 
+// INF: a * b * ( c * d ) 
+// INF: a + b + ( ~ a - a ) 
+// INF: a + b + ( c + d ) 
+// INF: a / b * c 
+// INF: error
+// INF: ( a + ( b - c ) ) / d ^ e 
+// ONP: a b + a ~ a - + 
+// ONP: x a ~ ~ b c * + = 
+// ONP: t a ~ x < b ~ < = 
+// ONP: a ~ b ~ ~ - c d + < p ! & q ! ! | 
+// ONP: error
+// ONP: x a ~ b * c / d - e f ~ % + = 
+// ONP: a b + a ~ a - + 
+// ONP: x a ~ ~ b c * + = 
+// ONP: t a ~ x < b ~ < = 
