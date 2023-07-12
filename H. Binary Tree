@@ -1,0 +1,229 @@
+// Kacper Mycka - grupa nr 2
+import java.util.Scanner;
+
+// klasa kolejki zaimplementowana w celu wyswietlania levelorder z stworzonego drzewa
+class Queue {
+    Node[] array; // kolejka za pomoca tablicy cyklicznej
+    int first; // pierwszy element w kolejce
+    int last; // ostatni element w kolejce
+    int elements; // ilosc elementow w kolejce
+    int maxsize; // maksymalny rozmiar kolejki
+    Queue(int size) {
+        first = 0;
+        last = -1; // po dodaniu pierwszego elementu bedzie wskazywac first i last na 0.
+        array = new Node[size + 1];
+        elements = 0;
+        maxsize = size + 1; // uzywany do modulo
+    }
+    public boolean isEmpty() {
+        if (elements == 0) {
+            return true;
+        }
+        return false;
+    }
+    // isEmpty() - sprawdza czy kolejka pusta
+    public void enQueue(Node x) {
+        last = (last+1) % maxsize; // ze wzgledu na cyklicznosc
+        array[last] = x;
+        elements++;
+    }
+    // enQueue(x) - wstawia nowy element x
+    public Node deQueue() {
+        elements--;
+        int previous = first;
+        first = (first+1) % maxsize; // ze wzgledu na cyklicznosc
+        return array[previous]; // zwracamy poprzedni first
+    }
+    // deQueue() - usuwa pierwszy element w kolejce i go zwraca
+
+}
+
+class Node { // wierzcholek drzewa
+    int value; // identyfikator
+    Node left; // lewe dziecko
+    Node right; // prawe dziecko
+    Node(int nodeValue) {
+        value = nodeValue;
+        left = null;
+        right = null;
+    }
+}
+
+class Tree {
+    public Node node; // korzen drzewa
+
+    Tree() {
+        node = null;
+    }
+
+    public void buildTree(int[] porder, int[] inorder, String order) {
+        // ostatni znaleziony wierzcholek w listach bedzie korzeniem, wiec ustalamy go dla obiektu klasy tree
+        node = buildEdges(porder, 0, porder.length - 1, inorder, 0, inorder.length - 1, order);
+    }
+
+    public Node buildEdges(int[] porder, int pbegin, int pend, int[] inorder, int inbegin, int inend, String order) {
+        // warunek zakonczenia rekurencji
+        if (pbegin > pend) {
+            return null;
+        }
+        
+        // utworz drzewo i wierzcholek drzewa
+        Node head;
+        if (order.equals("POSTORDER")) {
+            head = new Node(porder[pend]);
+        }
+        else { // (order == "PREORDER")
+            head = new Node(porder[pbegin]);
+        }
+
+        // znajdz pozycje wartosci korzenia w tablicy inorder
+        int position = inbegin;
+        while (position < inorder.length) {
+            // mozna przyrownac wartosci, poniewaz nie ma duplikatow
+            if (inorder[position] == head.value) {
+                break;
+            }
+            position++;
+        }
+
+        // oblicz dlugosc lewego i poddrzewa w inorder
+        int leftLength = position - inbegin;
+
+        // rekurencyjnie wywolaj funkcje buildTree dla lewego i prawego poddrzewa
+        if (order.equals("POSTORDER")) {
+            head.left = buildEdges(porder, pbegin, pbegin + leftLength - 1, inorder, inbegin, position - 1, order);
+            head.right = buildEdges(porder, pbegin + leftLength, pend - 1, inorder, position + 1, inend, order);
+        }
+        else { // (order == "PREORDER")
+            head.left = buildEdges(porder, pbegin + 1, pbegin + leftLength, inorder, inbegin, position - 1, order);
+            head.right = buildEdges(porder, pbegin + leftLength + 1, pend, inorder, position + 1, inend, order);
+        }
+
+        // zwroc wartosc wierzcholka
+        return head;
+    }   
+
+    // wyswietlanie w porzadku preorder
+    public void showPreorder(Node p) {
+        if (p != null) {
+            System.out.print(p.value + " ");
+            showPreorder(p.left);
+            showPreorder(p.right);
+        }
+    }
+
+    // wyswietlanie w porzadku postorder
+    public void showPostorder(Node p) {
+        if (p != null) {
+            showPostorder(p.left);
+            showPostorder(p.right);
+            System.out.print(p.value + " ");
+        }
+    }
+
+    // wyswietlanie w porzadku levelorder
+    public void showLevelorder(Node p, int size) {
+        Queue Q = new Queue(size); // utworz kolejke pusta
+        Q.enQueue(p); // wstaw do kolejki wezel s
+        while(!Q.isEmpty()) {
+            Node u = Q.deQueue(); // pierwszy wierzcholek
+            System.out.print(u.value + " "); // wyswietl u
+            if (u.left != null) Q.enQueue(u.left); // lewy syn
+            if (u.right != null) Q.enQueue(u.right); // prawy syn
+        }
+    }
+}
+
+class Source {
+    public static Scanner sc = new Scanner(System.in);
+    public static void main(String[] args) {
+        int sets = sc.nextInt(); // ilosc setow
+
+        for (int i = 0; i < sets; i++) {
+            System.out.printf("ZESTAW %d\n", i + 1);
+
+            int nodes = sc.nextInt(); // ilosc wierzcholkow
+            //sc.nextLine();
+            String order = sc.next(); // PREORDER lub POSTORDER
+
+            int[] porder = new int[nodes]; // tablica elementow w order porzadku
+            for (int j = 0; j < nodes; j++) {
+                porder[j] = sc.nextInt(); // uzupelniamy
+            }
+            sc.next();
+
+            int[] inorder = new int[nodes];
+            sc.nextLine(); // INORDER
+            for (int j = 0; j < nodes; j++) {
+                inorder[j] = sc.nextInt();
+            }
+            //sc.nextLine();
+
+            Tree tree = new Tree();
+            tree.buildTree(porder, inorder, order);
+
+            switch (order) {
+                case "PREORDER":
+                System.out.print("POSTORDER\n");
+                tree.showPostorder(tree.node);
+                System.out.print("\n");
+                break;
+                case "POSTORDER":
+                System.out.print("PREORDER\n");
+                tree.showPreorder(tree.node);
+                System.out.print("\n");
+                break;
+            }
+
+            System.out.println("LEVELORDER");
+            tree.showLevelorder(tree.node, nodes);
+            System.out.println();
+        }
+    }
+}
+
+// 4
+// 4
+// PREORDER
+// 1 2 3 4
+// INORDER
+// 2 1 3 4
+// 5
+// PREORDER
+// 1 2 3 4 5
+// INORDER
+// 2 4 3 1 5
+// 6
+// POSTORDER
+// 4 3 2 6 5 1
+// INORDER
+// 4 2 3 1 6 5
+// 7
+// PREORDER
+// 1 2 3 4 5 6 7
+// INORDER
+// 3 2 4 1 6 5 7
+
+
+
+
+// ZESTAW 1
+// POSTORDER
+// 2 4 3 1 
+// LEVELORDER
+// 1 2 3 4
+// ZESTAW 2
+// POSTORDER
+// 4 3 2 5 1 
+// LEVELORDER
+// 1 2 5 3 4
+// ZESTAW 3
+// PREORDER
+// 1 2 4 3 5 6
+// LEVELORDER
+// 1 2 5 4 3 6
+// ZESTAW 4
+// POSTORDER
+// 3 4 2 6 7 5 1
+// LEVELORDER
+// 1 2 5 3 4 6 7
