@@ -1,0 +1,167 @@
+// Kacper Mycka - grupa nr 2
+import java.util.Scanner;
+
+// Zadanie polega na wyznaczeniu k-tego (zmienna searching w main) najwiÄkszego elementu spoĹrĂłd elementĂłw w tablicy.
+// Nalezalo zaimplementowac rekurencyjny algorytm na podstawie magicznych piatek w liniowej zlozonosci, bez dodatkowych tablic i list, dzialajacy w miejscu.
+
+// Algorytm magicznych piÄtek jest algorytmem dziaĹajÄcym w zĹoĹźonoĹci O(n). Krotkie wytlumaczenie:
+// 1. Sortujemy tablice czesciami po 5 elementow, poniewaz wielkosc jest stala, to zlozonosc jest rowniez stala. Calkowita zlozonosc etapu sortowan wynosi wiec O(n/5).
+// 2. Kolejne wywolanie rekurencji bedzie w zlozonosci O(n/5), ewentualne kolejne w O(n/25) itd.
+// 3. Ostatecznie wykonanych moze byc ograniczona ilosc logn wywolan rekurencji, jednakze wywolania te sa na coraz mniejszych czesciach tablic, wiec nie wplywa to na ogolna zlozonosc algorytmu.
+// W tej implementacji dzielimy rowniez tablice na 3 czesci, co wykonywane jest rowniez w pesymistycznej zlozonosci O(n), wiec wszystko zgodnie z poleceniem.
+// Poniewaz moj program nie uzywa dodatkowych tablic i list, jest algorytmem dziaĹajÄcym w miejscu, to jego zĹoĹźonosc pamieciowa jest stala - O(n).
+
+public class Source {
+    public static Scanner sc = new Scanner(System.in);
+
+    // standard implementation of insertionSort but only in range from index begin to end
+    static void insertionSort(int arr[], int begin, int end) {
+        int i, key, j;
+        for (i = begin + 1; i <= end; i++) {
+            key = arr[i];
+            j = i - 1;
+    
+            while (j >= begin && arr[j] > key) {
+                arr[j + 1] = arr[j];
+                j = j - 1;
+            }
+
+            arr[j + 1] = key;
+        }
+    }
+    
+    // searching to szukany element
+    static int medianOfMedians(int[] array, int begin, int end, int searching) {
+        // 1. that should returns median of medians value finally
+        if (end - begin < 5) {
+            insertionSort(array,begin,end);
+            return array[begin + searching - 1];
+        }
+        // 2. divide to magic fives (last could be smaller) and sort them
+        int tempIndex = begin;
+        int medianIndex;
+        for (int i = begin; i <= end; i += 5) { // poniewaz dzielimy na piatki to o tyle zwiekszamy i w kazdej iteracji
+            if (i + 4 <= end) { // jezeli jest pelna piatka to sortujemy
+                insertionSort(array, i, i + 4);
+                medianIndex = i + 2;
+            }
+            else { // niepelna piatka moze wystapic tylko na koncu
+                insertionSort(array, i, end);
+                medianIndex = i + (end - i + 1) / 2;
+            }
+            // swap (median values on first indexs in array)
+            int helper = array[tempIndex];
+            array[tempIndex] = array[medianIndex];
+            array[medianIndex] = helper;
+            tempIndex++;
+        }
+        // 3. Find the median of medians
+        int median = medianOfMedians(array, begin, tempIndex - 1, (tempIndex + 1 - begin) / 2);
+
+        // 4. divide the array into three arrays:
+        // S1 = {xeS : x < M} ;
+        // S2 = {xeS : x = M} ;
+        // S3 = {xeS : x > M} ;
+
+        int firstIndex = begin;
+        int lastIndex = end;
+        int currentIndex = begin;
+
+        while (currentIndex <= lastIndex) { // konczymy na lastIndex, gdyz dalej nie ma juz wiekszych elementow od pivota (median)
+            if (array[currentIndex] < median) { // swap i przejscie do kolejnego elementu
+                int helper = array[currentIndex];
+                array[currentIndex] = array[firstIndex];
+                array[firstIndex] = helper;
+                firstIndex++;
+                currentIndex++;
+            } 
+            else if (array[currentIndex] > median) { // nie zwiekszamy currentIndex, poniewaz moglismy zamienic <= element do pivota
+                int helper = array[currentIndex];
+                array[currentIndex] = array[lastIndex];
+                array[lastIndex] = helper;
+                lastIndex--;
+            } 
+            else { // przejscie do kolejnego elementu
+                currentIndex++;
+            }
+        }
+
+        // now firstIndex is first median and lastIndex is second median and also
+        // S1 = <0,firstIndex-1>, S2 = <firstIndex,lastIndex>, S3 = <lastIndex+1,end>
+
+        if (searching <= firstIndex - begin) return medianOfMedians(array, begin, firstIndex - 1, searching); // rekurencja
+        // szukany element jest k-tym elementem w S1.
+        if (searching <= lastIndex + 1 - begin) return median;
+        // szukany jest w S2, czyli rĂłwny M
+        return medianOfMedians(array, lastIndex + 1, end, searching + begin - lastIndex - 1); // rekurencja
+        // szukaj w S3, numer k - ďź S1ďź -ďź S2ďź (odpowiednio mniejszy)          
+    }
+    
+    public static void main(String[] args) throws Exception {
+    int sets = sc.nextInt();
+        for (int j = 0; j < sets; j++) {
+            int length = sc.nextInt(); // dlugosc tablicy
+            int[] array = new int[length];
+            for (int i = 0; i < length; i++) {
+                array[i] = sc.nextInt();
+            }
+            int m = sc.nextInt(); // liczba zapytan
+            for (int i = 0; i < m; i++) {
+                int searching = sc.nextInt();
+                System.out.printf("%d ", searching);
+                if (searching <= length && searching > 0) { // jezeli dane poprawne to zwracamy wynik
+                    System.out.printf("%d\n", medianOfMedians(array,0,length-1,searching));
+                }
+                else {
+                    System.out.print("brak\n");
+                }
+            }
+        }
+    }
+}
+
+// input.txt
+// 3
+// 1
+// 9990
+// 5
+// 1 2 3 4 5
+// 52
+// 54 34 8 30 80 37 7 71
+// 14 94 12 81 25 43 98 50
+// 92 82 91 74 18 43 6 20 98
+// 63 24 6 34 76 44 3 49 70
+// 18 55 31 54 32 64 27 61
+// 79 8 43 22 52 25 80 62
+// 30 16
+// 10
+// 53 1 2 3 4 5 6 7 51 52
+// 5
+// 32132 1 1231 21 1
+// 7
+// 1 2 3 4 5 8 12345
+
+
+// output.txt
+// 1 9990
+// 2 brak
+// 3 brak
+// 4 brak
+// 5 brak
+// 53 brak
+// 1 3
+// 2 6
+// 3 6
+// 4 7
+// 5 8
+// 6 8
+// 7 12
+// 51 98
+// 52 98
+// 1 1
+// 2 1
+// 3 21
+// 4 1231
+// 5 32132
+// 8 brak
+// 12345 brak
