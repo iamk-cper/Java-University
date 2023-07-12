@@ -1,0 +1,435 @@
+// Kacper Mycka
+import java.util.Scanner;
+
+// Cala Baca zostala zbudowana w glownej mierze na metodzie Reverse. Poniewaz miala byc ona w zlozonosci O(1), (inne oczywiscie tez, ale to nie sprawialo problemow)
+// to polega to na zamianie ze soba indeksow Last i First w pociagach
+// Zastosowalem rowniez system, ktorego pilnowalem przez reszte zadania polegajacy na tym, ze w zaleznosci od tego w jakim kierunku zwrocony jest w tej chwili pociag
+// to w pamieci poprzednik pierwszego elementu jest nullem, a nastepnik ostatniego jest referencja do samego siebie. Brak dodatkowej zmiennej np. boolean w projekcie
+// pozwolil zminimalizowac zuzycie pamieci
+
+public class Source {
+    static Scanner sc = new Scanner(System.in);
+
+    // definicja klasy DoubleLinkList, symbolizujacej liste wagonow
+    public static class DoubleLinkList {
+
+        public DoubleLink First; // referencja do pierwszego elementu listy
+        public DoubleLink Last; // referencja do ostatniego elementu listy
+
+        // definicja klasy DoubleLink, symbolizujacej wagon
+        public static class DoubleLink {
+            public String name; // dane, w tym przypadku - typu int
+            public DoubleLink next; // referencja do nastepnego elementu
+            public DoubleLink prev; // referencja do poprzedniego elementu
+            public DoubleLink(String namex) {
+                name = namex; // nazwa pociagu dana w konstruktorze, brak elementow poprzedniego i nastepnego
+                prev = null;
+                next = null;
+            }
+        }
+
+        // konstruktor klasy DoubleLinkList
+        public DoubleLinkList() {
+            First = null; // lista nie ma jeszcze elementow
+            Last = null;
+        }
+    }
+    
+    // definicja klasy LinkList, symbolizujacej liste pociagow
+    public static class LinkList {
+        
+        // definicja klasy Link, symbolizujacej pociag
+        public static class Link {
+            public String name; // dana nazwa pociagu String
+            public Link next; // referencja do nastepnego elementu
+            public Link(String namex) {
+                name = namex;
+                next = null;
+            }
+            public DoubleLinkList wagony = new DoubleLinkList(); // obiekt klasy DoubleLinkList jako pole w klasie Link, bedzie symbolizowac zbior wagonow
+        }
+
+        public Link First; // referencja do pierwszego elementu listy pociagow
+
+        // konstruktor klasy LinkList
+        public LinkList() {
+            First = null; // lista nie ma jeszcze elementow
+        }
+    
+        // metoda locate sluzaca do wyszukiwania elementu po wartosci pola name
+        Link locate (String searchKey) {// szukany element searchKey
+            Link p = First ; // referencja do elementu listy
+            while (!(p.name.equals(searchKey))) {
+                p = p.next;
+            }
+            return p; // szukany element
+        }
+
+        boolean isReversed(DoubleLinkList.DoubleLink wagon) { // metoda sprawdza, czy wagon jest odwrocony
+            if (wagon.next == null) { // && wagon.prev == wagon, jesli wagon nie ma nastepnika, to znaczy, ze jest odwrocony
+                return true;
+            }
+            else return false; // (wagon.prev == null && wagon.next == wagon), w przeciwnym przypadku wagon jest nieodwrocony
+        }
+
+        boolean oneElement(DoubleLinkList.DoubleLink wagon) { // da sie zoptymalizowac
+            if ((wagon.next == null && wagon.prev == wagon) || (wagon.prev == null && wagon.next == wagon)) { // jednoelementowa tablica posiada z jednej strony null, a z drugiej referencje do samego siebie (w kierunku swojej rewersji)
+                return true;
+            }
+            else return false;
+        }
+
+        void New(String T1, String W) {
+            Link train = new Link(T1); // tworzy linka z nowa nazwa pociagu T1
+            DoubleLinkList.DoubleLink wagon = new DoubleLinkList.DoubleLink(W); // stworzenie nowego wagonu z nazwa W
+            train.wagony.First = wagon; // przylaczenie wagonu do pociagu (DoubleListy wagonow)
+            train.wagony.Last = wagon;
+    
+            Link second = First; // przesuniecie pierwszego wagonu na drugie miejsce
+            First = train; // dodanie nowego wagonu na poczatek listy
+            train.next = second;
+
+            wagon.next = wagon; // rewersja standardowa
+        }
+
+        void TrainsList() { // metoda wyswietlajaca pociagi
+            System.out.print("Trains: "); // wypisanie slowa kluczowego
+            Link train = First; // stworzenie pomocniczego pociagu First
+    
+            while (train != null) { // dla kazdego pociagu na liscie
+                System.out.print(train.name + " "); // wypisuje jego nazwe
+                train = train.next;
+            }
+            System.out.println(); // i zakancza linie
+        }
+
+        void delTrain(String T1) {
+            Link train1 = First; // pomocnicze pociagi First do petli
+            Link train2 = First;
+            while (!(train2.name.equals(T1))) { // dopoki nieznaleziono pociagu
+                train1 = train2; // szukamy poprzedzajacego
+                train2 = train2.next; // i usuwanego pociagu
+            }
+            if (T1.equals(train1.name)) { // T1 jest pierwszym pociagiem na liscie
+                First = train1.next; // wiec pierwszym pociagiem od teraz jest kolejny na liscie
+            }
+            else { // w przeciwnym razie train1 bedzie przed train2, ktory jest usuwanym pociagiem
+                train1.next = train2.next; // wiec przejmuje jego referencje do kolejnego elementu
+            }
+        }
+
+        void InsertFirst(String T1, String W) { // metoda wstawiajaca wagon na poczatek pociagu
+            Link train = locate(T1); // wyszukuje pociag o nazwie T1
+            DoubleLinkList.DoubleLink wagon = new DoubleLinkList.DoubleLink(W); // tworzy nowy obiekt klasy DoubleLink z nazwa W
+        
+            if (oneElement(train.wagony.First)) { // jesli lista ma tylko jeden element
+                if (!isReversed(train.wagony.First)) { // jesli wagon jest nieodwrocony
+                    train.wagony.First.prev = wagon; // ustawia wskaznik "prev" obecnego pierwszego wagonu na nowo dodany wagon
+                    wagon.next = train.wagony.First; // ustawia wskaznik "next" nowo dodanego wagonu na obecny pierwszy wagon
+                    train.wagony.First = wagon; // ustawia nowo dodany wagon jako pierwszy wagon pociagu
+                }
+                else { // jesli wagon jest odwrocony
+                    train.wagony.First.next = wagon; // ustawia wskaznik "next" obecnego pierwszego wagonu na nowo dodany wagon
+                    wagon.prev = train.wagony.First; // ustawia wskaznik "prev" nowo dodanego wagonu na obecny pierwszy wagon
+                    wagon.next = null; // ustawia wskaznik "next" nowo dodanego wagonu na null, poniewaz nie ma on juz zadnego nastepnika
+                    train.wagony.First = wagon; // ustawia nowo dodany wagon jako pierwszy wagon pociagu
+                }
+            }
+            else { // jesli lista ma wiecej niz jeden element
+                if (train.wagony.First.prev == null) { // standardowy przypadek, gdy pociag jest nieodwrocony
+                    wagon.next = train.wagony.First; // ustawia wskaznik "next" nowo dodanego wagonu na obecny pierwszy wagon
+                    train.wagony.First.prev = wagon; // ustawia wskaznik "prev" obecnego pierwszego wagonu na nowo dodany wagon
+                    train.wagony.First = wagon; // ustawia nowo dodany wagon jako pierwszy wagon pociagu
+                }
+                else { // przypadek, gdy pociag jest odwrocony
+                    train.wagony.First.next = wagon; // ustawia wskaznik "next" obecnego pierwszego wagonu na nowo dodany wagon
+                    wagon.prev = train.wagony.First; // ustawia wskaznik "prev" nowo dodanego wagonu na obecny pierwszy wagon
+                    wagon.next = null; // ustawia wskaznik "next" nowo dodanego wagonu na null, poniewaz nie ma on juz zadnego nastepnika
+                    train.wagony.First = wagon; // ustawia nowo dodany wagon jako pierwszy wagon pociagu
+                }
+            }
+        }
+
+        void InsertLast(String T1, String W) {
+            Link train = locate(T1); // znajdujemy szukany pociag
+            DoubleLinkList.DoubleLink wagon = new DoubleLinkList.DoubleLink(W); // nowy wagon
+            if (oneElement(train.wagony.First)) { // jesli jest tylko jeden wagon w pociagu
+                if (!isReversed(train.wagony.First)) { // jesli pociag nie jest odwrocony
+                    train.wagony.First.next = wagon; // pierwszy element to nowy wagon i nastepujacym po wczesniej pierwszym
+                    wagon.prev = train.wagony.First;
+                    train.wagony.Last = wagon;
+                    wagon.next = wagon;
+                }
+                else { // reversed
+                    train.wagony.First.prev = wagon; // pierwszy element to nowy wagon i bedzie poprzedzajacy wczesniej pierwszy 
+                    wagon.next = train.wagony.First;
+                    train.wagony.Last = wagon;
+                    wagon.prev = wagon;
+                }
+            }
+            else {
+                if (train.wagony.First.prev == null) { // standard, tzn. pociag nieobrocony
+                    wagon.prev = train.wagony.Last; // ostatni element to nowy wagon i bedzie nastepujacy po wczesniej ostatnim 
+                    train.wagony.Last.next = wagon;
+                    train.wagony.Last = wagon;
+                    wagon.next = wagon;
+                }
+                else { // reversed
+                    train.wagony.Last.prev = wagon; // ostatni element to nowy wagon i bedzie poprzedzajacy wczesniej ostatni
+                    wagon.next = train.wagony.Last;
+                    wagon.prev = wagon;
+                    train.wagony.Last = wagon;
+                }
+            }
+        }
+
+        void DelFirst(String T1, String T2) {
+            Link train1 = locate(T1);
+            New(T2, train1.wagony.First.name); // tworzymy nowy pociag z pierwszego wagonu train1
+            if (train1.wagony.First == train1.wagony.Last) { // pociag jednoelementowy
+                delTrain(T1); // pociag przestaje istniec
+            }
+            else { // wiecej wagonow
+                if (train1.wagony.First.prev == null) {  // jezeli jest standardowy
+                    train1.wagony.First = train1.wagony.First.next; // przesuwamy poczatek na jedno miejsce dalej
+                    train1.wagony.First.prev = null;
+                }
+                else { // reversed
+                    train1.wagony.First = train1.wagony.First.prev; // przesuwamy poczatek jedno miejsce wczesniej
+                    train1.wagony.First.next = null;
+                }
+            }
+        }
+
+        void DelLast(String T1, String T2) {
+            Link train1 = locate(T1); // zlokalizowanie pociagu danego pierwszym stringiem
+            New(T2, train1.wagony.Last.name); // nowy pociag
+            if (train1.wagony.First == train1.wagony.Last) { // pociag jednoelementowy
+                delTrain(T1); // usuniecie pociagu
+            }
+            else { // pociag wieloelementowy
+                if (train1.wagony.Last.next == train1.wagony.Last) { // standard
+                    if (train1.wagony.Last.prev.prev == train1.wagony.Last) { // wystepuje laczenie przeciwstawnych pociagow z union
+                        train1.wagony.Last = train1.wagony.Last.prev;
+                        train1.wagony.Last.prev = train1.wagony.Last; 
+                    }
+                    else { // standardowe przejscie
+                        train1.wagony.Last = train1.wagony.Last.prev;
+                        train1.wagony.Last.next = train1.wagony.Last;
+                    }
+                }
+                else { // reversed
+                    if (train1.wagony.Last.next.next == train1.wagony.Last) { // wystepuje laczenie przeciwstawnych pociagow z union
+                        train1.wagony.Last = train1.wagony.Last.next;
+                        train1.wagony.Last.next = train1.wagony.Last;
+                    }
+                    else { // standardowe przejscie
+                        train1.wagony.Last = train1.wagony.Last.next;
+                        train1.wagony.Last.prev = train1.wagony.Last;
+                    }
+                }
+            }
+        }
+
+        void Union(String T1, String T2) {
+            Link train1 = locate(T1);
+            Link train2 = locate(T2);
+
+
+            if (train1.wagony.Last.next == train1.wagony.Last) { // jezeli pociag1 konczy sie bez rewersji
+                if (train2.wagony.First.prev == null) { // jezeli pociag2 zaczyna sie bez rewersji to standardowe laczenie
+                    train1.wagony.Last.next = train2.wagony.First;
+                    train2.wagony.First.prev = train1.wagony.Last;
+                }
+                else { // jezeli pociag2 zaczyna sie z rewersja to odpowiednio laczymy
+                    train1.wagony.Last.next = train2.wagony.First;
+                    train2.wagony.First.next = train1.wagony.Last;
+                }
+            }
+            else { // pociag1 konczy sie z rewersja
+                if (train2.wagony.First.prev == null) { // pociag2 zaczyna sie bez rewersji
+                    train1.wagony.Last.prev = train2.wagony.First;
+                    train2.wagony.First.prev = train1.wagony.Last;
+                }
+                else { // pociag2 zaczyna sie z rewersja
+                    train2.wagony.First.next = train1.wagony.Last;
+                    train1.wagony.Last.prev = train2.wagony.First;
+                }
+            }
+
+            train1.wagony.Last = train2.wagony.Last; // na koniec zamiana indeksu na koncowy nowego pociagu
+            delTrain(T2); // a drugi przestaje istniec
+        }
+
+        void Display(String T1) {
+            System.out.print(T1 + ": ");
+            Link train = locate(T1);
+            DoubleLinkList.DoubleLink wagon = train.wagony.First;
+            boolean mode = true; // dodatkowa zmienna ktora kontroluje w ktora strone przemieszczamy sie w wyswietlaniu
+
+            if (wagon.prev != null) { // reversed
+                while(wagon != train.wagony.Last) { // wyswietlamy nazwy az do dotarcia do ostatniego wagonu
+                    System.out.print(wagon.name + " ");
+                    if (mode) {
+                        if (wagon.prev != null) {
+                            if (wagon.prev.prev == wagon) { // petla nieskonczona, zmiana stanu
+                                mode = !mode;
+                            }
+                        }
+                        wagon = wagon.prev; // sprawdzamy wczesniejszy element
+                    }
+                    else {
+                        if (wagon.next != null) {
+                            if (wagon.next.next == wagon) { // petla nieskonczona, zmiana stanu
+                                mode = !mode;
+                            }
+                        }
+                        wagon = wagon.next; // sprawdzamy nastepujacy element
+                    }
+                }
+            }
+            else { // standard
+                while (wagon != train.wagony.Last) { // analogicznie jak wyzej
+                    System.out.print(wagon.name + " ");
+                    if (mode) {
+                        if (wagon.next != null) {
+                            if (wagon.next.next == wagon) { // nieskonczona petla, zmianastanu
+                                mode = !mode;
+                            }
+                        }
+                        wagon = wagon.next; // sprawdzamy nastepujacy element
+                    }
+                    else {
+                        if (wagon.prev != null) {
+                            if (wagon.prev.prev == wagon) { // petla nieskonczona, zmiana stanu
+                                mode = !mode;
+                            }
+                        }
+                        wagon = wagon.prev; // sprawdamy poprzedzajacy element
+                    }
+                }
+            }
+
+            System.out.println(wagon.name + " "); // wyswietlam ostatnia nazwe i koncze linie
+        }
+
+        void Reverse(String T1) {
+            Link train = locate(T1);
+            DoubleLinkList.DoubleLink helper = train.wagony.First; // zamiana referencji Last i First
+            train.wagony.First = train.wagony.Last;
+            train.wagony.Last = helper;
+
+            // zamiana nastepnikow i poprzednikow First i Last zgodnie z zalozeniami
+            if (train.wagony.Last.prev == null) { // wejsciowy pociag zaczynal sie bez reverse
+                if (train.wagony.First == train.wagony.First.next) { // wejsciowy pociag konczyl sie bez reverse
+                    train.wagony.First.next = null;
+                    train.wagony.Last.prev = train.wagony.Last;
+                }
+                else { // wejsciowy pociag konczyl sie z reverse
+                    train.wagony.First.prev = null;
+                    train.wagony.Last.prev = train.wagony.Last;
+                }
+            }
+            else { // wejsciowy pociag zaczynal sie z reverse
+                if (train.wagony.First == train.wagony.First.next) { // wejsciowy pociag konczyl sie bez reverse
+                    train.wagony.First.next = null;
+                    train.wagony.Last.next = train.wagony.Last;
+                }
+                else { // wejsciowy pociag konczyl sie z reverse
+                    train.wagony.First.prev = null;
+                    train.wagony.Last.next = train.wagony.Last;
+                }
+            }
+        }
+
+    }
+
+    public static void main(String[] args) throws Exception {
+        int z, n;
+        String line, train, train2, name;
+        z = sc.nextInt(); // liczba setow
+        for (int i = 0; i < z; i++) { // dla kazdego setu
+            LinkList trains = new LinkList();
+            n = sc.nextInt(); // pobieram ilosc polecen
+            sc.nextLine(); // ominiecie znaku bialego
+            for (int j = 0; j < n; j++) { // dla kazdego polecenia
+                line = sc.next();
+                if (line.equals("New")) {
+                    train = sc.next(); // nazwa pociagu
+                    name = sc.next(); // nazwa wagonu
+                    trains.New(train, name);
+                }
+                else if (line.equals("InsertFirst")) {
+                    train = sc.next();
+                    name = sc.next();
+                    trains.InsertFirst(train, name);
+                }
+                else if (line.equals("InsertLast")) {
+                    train = sc.next();
+                    name = sc.next();
+                    trains.InsertLast(train, name);
+                }
+                else if (line.equals("Display")) {
+                    train = sc.next();
+                    trains.Display(train);
+                }
+                else if (line.equals("TrainsList")) {
+                    trains.TrainsList();
+                }
+                else if (line.equals("Reverse")) {
+                    train = sc.next();
+                    trains.Reverse(train);
+                }
+                else if (line.equals("Union")) {
+                    train = sc.next();
+                    train2 = sc.next();
+                    trains.Union(train, train2);
+                }
+                else if (line.equals("DelFirst")) {
+                    train = sc.next();
+                    train2 = sc.next();
+                    trains.DelFirst(train, train2);
+                }
+                else if (line.equals("DelLast")) {
+                    train = sc.next();
+                    train2 = sc.next();
+                    trains.DelLast(train, train2);
+                }
+            }
+        }
+    }
+}
+
+// input
+// 1
+// 26
+// New T1 W1
+// InsertLast T1 W2
+// InsertLast T1 W3
+// New T2 W6
+// InsertLast T2 W5
+// InsertLast T2 W4
+// Reverse T2
+// New T3 W8
+// InsertLast T3 W7
+// Reverse T3
+// New T4 W9
+// InsertLast T4 W10
+// Union T1 T2
+// Union T3 T4
+// Union T1 T3
+// Display T1
+// DelLast T1 T2
+// DelLast T1 T3
+// DelLast T1 T4
+// DelLast T1 T5
+// DelLast T1 T6
+// DelLast T1 T7
+// DelLast T1 T8
+// DelLast T1 T9
+// DelLast T1 T10
+// Display T1
+
+// output
+// T1: W1 W2 W3 W4 W5 W6 W7 W8 W9 W10 
+// T1: W1 
